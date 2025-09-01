@@ -14,6 +14,17 @@ let currentDate = new Date();
 // Gün isimlerini Türkçe olarak tutuyoruz
 const dayNames = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 
+// Yeni vardiya seçenekleri ve karşılık gelen CSS sınıfları
+const vardiyaOptions = [
+    { value: "", text: "" },
+    { value: "sabah", text: "Sabah" },
+    { value: "gece", text: "Gece" },
+    { value: "ara", text: "Ara" },
+    { value: "haftalik-izin", text: "Haftalık İzin" },
+    { value: "yillik-izin", text: "Yıllık İzin" },
+    { value: "resmi-tatil", text: "Resmi Tatil" }
+];
+
 // Sayfayı açtığımızda takvimi güncelleyen ve verileri yükleyen ana fonksiyon
 function updateCalendar() {
     mainContent.innerHTML = '';
@@ -46,6 +57,11 @@ function updateCalendar() {
             totalMesai += parseFloat(entryData.mesai);
         }
 
+        let vardiyaOptionsHTML = '';
+        vardiyaOptions.forEach(option => {
+            vardiyaOptionsHTML += `<option value="${option.value}" ${entryData.vardiya === option.value ? 'selected' : ''}>${option.text}</option>`;
+        });
+
         const dayEntryHTML = `
             <div class="day-entry" data-date="${dateString}">
                 <div class="date-info">
@@ -53,11 +69,8 @@ function updateCalendar() {
                     <span>${dayName}</span>
                 </div>
                 <div class="input-group">
-                    <select class="vardiya-select">
-                        <option value=""></option>
-                        <option value="sabah" ${entryData.vardiya === 'sabah' ? 'selected' : ''}>Sabah</option>
-                        <option value="gece" ${entryData.vardiya === 'gece' ? 'selected' : ''}>Gece</option>
-                        <option value="haftalik-izin" ${entryData.vardiya === 'haftalik-izin' ? 'selected' : ''}>Haftalık İzin</option>
+                    <select class="vardiya-select ${entryData.vardiya || ''}">
+                        ${vardiyaOptionsHTML}
                     </select>
                     <input type="number" class="mesai-input" placeholder="Mesai Saati" value="${entryData.mesai || ''}">
                     <input type="text" class="aciklama-input" placeholder="Açıklama" value="${entryData.aciklama || ''}">
@@ -79,7 +92,8 @@ saveButton.addEventListener('click', () => {
 
     dayEntries.forEach(entry => {
         const date = entry.getAttribute('data-date');
-        const vardiya = entry.querySelector('.vardiya-select').value;
+        const vardiyaSelect = entry.querySelector('.vardiya-select');
+        const vardiya = vardiyaSelect.value;
         const mesai = entry.querySelector('.mesai-input').value;
         const aciklama = entry.querySelector('.aciklama-input').value;
 
@@ -91,6 +105,8 @@ saveButton.addEventListener('click', () => {
                 aciklama
             });
         }
+        // Vardiya seçimine göre sınıfı güncelle
+        vardiyaSelect.className = 'vardiya-select ' + vardiya;
     });
 
     localStorage.setItem('mesai-kayitlari', JSON.stringify(allData));
@@ -114,10 +130,17 @@ nextButton.addEventListener('click', () => {
 
 // Mesai saati ücreti değiştiğinde toplam kazancı güncelle
 hourlyRateInput.addEventListener('input', () => {
-    const totalMesai = parseFloat(totalMesaiHoursSpan.textContent);
-    const totalEarnings = totalMesai * parseFloat(hourlyRateInput.value || 0);
-    totalEarningsSpan.textContent = totalEarnings.toFixed(2);
+    updateCalendar(); // Ücret değişince takvimi güncelleyip kazancı tekrar hesapla
 });
+
+// Vardiya seçimi değiştiğinde rengi güncelle
+mainContent.addEventListener('change', (event) => {
+    if (event.target.classList.contains('vardiya-select')) {
+        const selectedVardiya = event.target.value;
+        event.target.className = 'vardiya-select ' + selectedVardiya;
+    }
+});
+
 
 // Sayfa yüklendiğinde takvimi göster
 updateCalendar();
