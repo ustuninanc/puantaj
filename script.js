@@ -56,13 +56,11 @@ async function updateCalendar() {
     monthYearSpan.textContent = currentDate.toLocaleDateString('tr-TR', options);
     
     // Firebase'den verileri çekiyoruz
-    const querySnapshot = await getDocs(collection(db, "mesai-kayitlari"));
-    const savedData = querySnapshot.docs.map(doc => doc.data());
+    const docRef = doc(db, "mesai-kayitlari", "data");
+    const docSnap = await getDocs(docRef);
     
-    // Veritabanından gelen veriyi doğru şekilde alıyoruz
-    const allSavedData = savedData[0] || {};
+    const allSavedData = docSnap.exists() ? docSnap.data() : {};
 
-    // localStorage'dan mesai ücretini çekiyoruz (şimdilik)
     const savedHourlyRate = localStorage.getItem('hourly-rate') || 0;
     hourlyRateInput.value = savedHourlyRate;
 
