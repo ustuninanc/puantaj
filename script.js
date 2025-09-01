@@ -1,3 +1,33 @@
+// Firebase SDK'sını içe aktarıyoruz
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, setDoc, doc } from "firebase/firestore";
+
+// Kendi Firebase yapılandırma objeni buraya yapıştır
+const firebaseConfig = {// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAcbM72Qp25gW6AHidAbTyVBTWNidGZfeQ",
+  authDomain: "mesai-takip-febc7.firebaseapp.com",
+  projectId: "mesai-takip-febc7",
+  storageBucket: "mesai-takip-febc7.firebasestorage.app",
+  messagingSenderId: "25890495039",
+  appId: "1:25890495039:web:2ec6508d58ea4be121b68a"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+  // Senin Firebase ayarların
+};
+
+// Firebase'i başlatıyoruz
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // HTML elementlerini seçiyoruz
 const saveButton = document.querySelector('.save-button');
 const mainContent = document.querySelector('main');
@@ -8,13 +38,12 @@ const totalMesaiHoursSpan = document.getElementById('total-mesai-hours');
 const totalEarningsSpan = document.getElementById('total-earnings');
 const hourlyRateInput = document.getElementById('hourly-rate');
 
-// Ay ve yıl bilgisini tutacak bir değişken oluşturuyoruz
+// Ay ve yıl bilgisini tutacak bir değişken
 let currentDate = new Date();
 
 // Gün isimlerini Türkçe olarak tutuyoruz
 const dayNames = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 
-// Yeni vardiya seçenekleri ve karşılık gelen CSS sınıfları
 const vardiyaOptions = [
     { value: "", text: "" },
     { value: "sabah", text: "Sabah" },
@@ -25,8 +54,8 @@ const vardiyaOptions = [
     { value: "resmi-tatil", text: "Resmi Tatil" }
 ];
 
-// Sayfayı açtığımızda takvimi güncelleyen ve verileri yükleyen ana fonksiyon
-function updateCalendar() {
+// Verileri Firebase'den yükleyen ve takvimi güncelleyen ana fonksiyon
+async function updateCalendar() {
     mainContent.innerHTML = '';
     
     const year = currentDate.getFullYear();
@@ -38,10 +67,13 @@ function updateCalendar() {
     const options = { year: 'numeric', month: 'long' };
     monthYearSpan.textContent = currentDate.toLocaleDateString('tr-TR', options);
     
-    const savedData = JSON.parse(localStorage.getItem('mesai-kayitlari')) || [];
+    // Firebase'den verileri çekiyoruz
+    const querySnapshot = await getDocs(collection(db, "mesai-kayitlari"));
+    const savedData = querySnapshot.docs.map(doc => doc.data());
     const savedDataMap = new Map(savedData.map(item => [item.date, item]));
+
+    // localStorage'dan mesai ücretini çekiyoruz (şimdilik)
     const savedHourlyRate = localStorage.getItem('hourly-rate') || 0;
-    
     hourlyRateInput.value = savedHourlyRate;
 
     let totalMesai = 0;
@@ -86,9 +118,9 @@ function updateCalendar() {
 }
 
 // "Kaydet" butonuna tıklandığında çalışacak fonksiyon
-saveButton.addEventListener('click', () => {
+saveButton.addEventListener('click', async () => {
     const dayEntries = document.querySelectorAll('.day-entry');
-    const allData = [];
+    const allData = {};
 
     dayEntries.forEach(entry => {
         const date = entry.getAttribute('data-date');
@@ -98,21 +130,18 @@ saveButton.addEventListener('click', () => {
         const aciklama = entry.querySelector('.aciklama-input').value;
 
         if (vardiya || mesai || aciklama) {
-            allData.push({
-                date,
-                vardiya,
-                mesai,
-                aciklama
-            });
+            allData[date] = { date, vardiya, mesai, aciklama };
         }
-        // Vardiya seçimine göre sınıfı güncelle
-        vardiyaSelect.className = 'vardiya-select ' + vardiya;
     });
 
-    localStorage.setItem('mesai-kayitlari', JSON.stringify(allData));
+    // Verileri Firebase'e kaydediyoruz
+    const savePromise = setDoc(doc(db, "mesai-kayitlari", "data"), allData);
+    
     localStorage.setItem('hourly-rate', hourlyRateInput.value);
 
-    alert('Tüm veriler kaydedildi!');
+    await savePromise;
+
+    alert('Tüm veriler Firebase\'e kaydedildi!');
     
     updateCalendar();
 });
@@ -130,10 +159,9 @@ nextButton.addEventListener('click', () => {
 
 // Mesai saati ücreti değiştiğinde toplam kazancı güncelle
 hourlyRateInput.addEventListener('input', () => {
-    updateCalendar(); // Ücret değişince takvimi güncelleyip kazancı tekrar hesapla
+    updateCalendar();
 });
 
-// Vardiya seçimi değiştiğinde rengi güncelle
 mainContent.addEventListener('change', (event) => {
     if (event.target.classList.contains('vardiya-select')) {
         const selectedVardiya = event.target.value;
@@ -141,6 +169,4 @@ mainContent.addEventListener('change', (event) => {
     }
 });
 
-
-// Sayfa yüklendiğinde takvimi göster
 updateCalendar();
