@@ -3,24 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, setDoc, doc } from "firebase/firestore";
 
 // Kendi Firebase yapılandırma objeni buraya yapıştır
-const firebaseConfig = {// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAcbM72Qp25gW6AHidAbTyVBTWNidGZfeQ",
-  authDomain: "mesai-takip-febc7.firebaseapp.com",
-  projectId: "mesai-takip-febc7",
-  storageBucket: "mesai-takip-febc7.firebasestorage.app",
-  messagingSenderId: "25890495039",
-  appId: "1:25890495039:web:2ec6508d58ea4be121b68a"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-  // Senin Firebase ayarların
+    apiKey: "AIzaSyAcbM72Qp25gW6AHidAbTyVBTWNidGZfeQ",
+    authDomain: "mesai-takip-febc7.firebaseapp.com",
+    projectId: "mesai-takip-febc7",
+    storageBucket: "mesai-takip-febc7.firebasestorage.app",
+    messagingSenderId: "25890495039",
+    appId: "1:25890495039:web:2ec6508d58ea4be121b68a"
 };
 
 // Firebase'i başlatıyoruz
