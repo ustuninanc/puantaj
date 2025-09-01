@@ -115,7 +115,37 @@ select, input {
 
 select {
     width: 100%;
+    /* Varsayılan arka plan */
+    background-color: #f0f0f0; 
+    color: #333;
 }
+
+/* Vardiya Renkleri */
+.vardiya-select.sabah {
+    background-color: #c8e6c9; /* Açık yeşil */
+    color: #333;
+}
+.vardiya-select.gece {
+    background-color: #bbdefb; /* Açık mavi */
+    color: #333;
+}
+.vardiya-select.ara {
+    background-color: #ffccbc; /* Açık turuncu */
+    color: #333;
+}
+.vardiya-select.haftalik-izin {
+    background-color: #e1bee7; /* Açık mor */
+    color: #333;
+}
+.vardiya-select.yillik-izin {
+    background-color: #fff9c4; /* Açık sarı */
+    color: #333;
+}
+.vardiya-select.resmi-tatil {
+    background-color: #ffcdd2; /* Açık kırmızı */
+    color: #333;
+}
+
 
 input[type="number"], input[type="text"] {
     width: auto;
