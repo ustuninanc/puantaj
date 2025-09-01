@@ -58,7 +58,9 @@ async function updateCalendar() {
     // Firebase'den verileri çekiyoruz
     const querySnapshot = await getDocs(collection(db, "mesai-kayitlari"));
     const savedData = querySnapshot.docs.map(doc => doc.data());
-    const savedDataMap = new Map(savedData.map(item => [item.date, item]));
+    
+    // Veritabanından gelen veriyi doğru şekilde alıyoruz
+    const allSavedData = savedData[0] || {};
 
     // localStorage'dan mesai ücretini çekiyoruz (şimdilik)
     const savedHourlyRate = localStorage.getItem('hourly-rate') || 0;
@@ -71,7 +73,7 @@ async function updateCalendar() {
         const dayName = dayNames[currentDay.getDay()];
         const dateString = `${year}-${month + 1}-${i}`;
 
-        const entryData = savedDataMap.get(dateString) || {};
+        const entryData = allSavedData[dateString] || {};
         
         if (entryData.mesai) {
             totalMesai += parseFloat(entryData.mesai);
