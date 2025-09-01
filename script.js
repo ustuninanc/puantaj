@@ -20,7 +20,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
   // Senin Firebase ayarların
 };
 
