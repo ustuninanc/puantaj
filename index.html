@@ -177,21 +177,6 @@
         <button id="next-btn">&gt;</button>
     </header>
 
-    <div class="summary">
-        <div>
-            <span>Mesai Saati Ücreti:</span>
-            <input type="number" id="hourly-rate" value="0">
-        </div>
-        <div>
-            <span>Toplam Mesai Saati:</span>
-            <span id="total-mesai-hours">0</span>
-        </div>
-        <div>
-            <span>Toplam Mesai Kazancı:</span>
-            <span id="total-earnings">0</span>
-        </div>
-    </div>
-    
     <div class="calendar-grid" id="calendar-container">
         <div class="calendar-day-header">Pzt</div>
         <div class="calendar-day-header">Sal</div>
@@ -214,6 +199,21 @@
                 <input type="text" id="modal-aciklama-input" placeholder="Açıklama">
                 <button id="modal-save-button" class="save-button">Kaydet</button>
             </div>
+        </div>
+    </div>
+    
+    <div class="summary">
+        <div>
+            <span>Mesai Saati Ücreti:</span>
+            <input type="number" id="hourly-rate" value="0">
+        </div>
+        <div>
+            <span>Toplam Mesai Saati:</span>
+            <span id="total-mesai-hours">0</span>
+        </div>
+        <div>
+            <span>Toplam Mesai Kazancı:</span>
+            <span id="total-earnings">0</span>
         </div>
     </div>
     
@@ -250,7 +250,7 @@
         const closeButton = document.querySelector('.close-button');
 
         let currentDate = new Date();
-        let selectedDayDate = null; // Tıklanan günün tarihini tutacak
+        let selectedDayDate = null;
 
         const vardiyaOptions = [
             { value: "", text: "" },
@@ -261,7 +261,31 @@
             { value: "yillik-izin", text: "Yıllık İzin" },
             { value: "resmi-tatil", text: "Resmi Tatil" }
         ];
+        
+        async function getSavedData() {
+            try {
+                const docRef = db.collection("mesai-kayitlari").doc("data");
+                const docSnap = await docRef.get();
+                return docSnap.exists ? docSnap.data() : {};
+            } catch (e) {
+                console.error("Veritabanı bağlantı hatası: ", e);
+                return {};
+            }
+        }
 
+        async function saveToFirebase(allData, hourlyRate) {
+            try {
+                await db.collection("mesai-kayitlari").doc("data").set({
+                    ...allData,
+                    hourlyRate: hourlyRate
+                });
+                alert('Tüm veriler Firebase\'e kaydedildi!');
+            } catch (e) {
+                console.error("Veri kaydetme hatası: ", e);
+                alert("Veri kaydedilirken bir hata oluştu.");
+            }
+        }
+        
         function calculateSummary(allData) {
             let totalMesai = 0;
             const year = currentDate.getFullYear();
@@ -284,15 +308,7 @@
         }
 
         async function updateCalendar() {
-            let allSavedData = {};
-            try {
-                const docRef = db.collection("mesai-kayitlari").doc("data");
-                const docSnap = await docRef.get();
-                allSavedData = docSnap.exists ? docSnap.data() : {};
-            } catch (e) {
-                console.error("Veritabanı bağlantı hatası: ", e);
-                allSavedData = {};
-            }
+            const allSavedData = await getSavedData();
             
             calendarContainer.innerHTML = `
                 <div class="calendar-day-header">Pzt</div>
@@ -357,13 +373,14 @@
 
                 calendarContainer.appendChild(dayDiv);
             }
+            hourlyRateInput.value = allSavedData.hourlyRate || 0;
             calculateSummary(allSavedData);
         }
         
         modalSaveButton.addEventListener('click', async () => {
             if (!selectedDayDate) return;
 
-            const allSavedData = (await db.collection("mesai-kayitlari").doc("data").get()).data() || {};
+            const allSavedData = await getSavedData();
             
             const vardiya = modalVardiyaSelect.value;
             const mesai = modalMesaiInput.value;
@@ -382,7 +399,7 @@
                 delete allSavedData[selectedDayDate];
             }
             
-            await db.collection("mesai-kayitlari").doc("data").set(allSavedData);
+            await saveToFirebase(allSavedData, hourlyRateInput.value);
             
             modal.style.display = 'none';
             updateCalendar();
@@ -409,10 +426,9 @@
         });
 
         hourlyRateInput.addEventListener('input', () => {
-            const allData = (db.collection("mesai-kayitlari").doc("data").get()).data() || {};
-            calculateSummary(allData);
+            getSavedData().then(calculateSummary);
         });
-        
+
         updateCalendar();
     </script>
 </body>
