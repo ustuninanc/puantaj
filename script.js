@@ -1,8 +1,4 @@
-// Firebase SDK'sını içe aktarıyoruz
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, setDoc, doc } from "firebase/firestore";
-
-// Kendi Firebase yapılandırma objeni buraya yapıştır
+// Firebase'i başlatıyoruz
 const firebaseConfig = {
     apiKey: "AIzaSyAcbM72Qp25gW6AHidAbTyVBTWNidGZfeQ",
     authDomain: "mesai-takip-febc7.firebaseapp.com",
@@ -12,9 +8,8 @@ const firebaseConfig = {
     appId: "1:25890495039:web:2ec6508d58ea4be121b68a"
 };
 
-// Firebase'i başlatıyoruz
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db = app.firestore();
 
 // HTML elementlerini seçiyoruz
 const saveButton = document.querySelector('.save-button');
@@ -56,10 +51,10 @@ async function updateCalendar() {
     monthYearSpan.textContent = currentDate.toLocaleDateString('tr-TR', options);
     
     // Firebase'den verileri çekiyoruz
-    const docRef = doc(db, "mesai-kayitlari", "data");
-    const docSnap = await getDocs(docRef);
+    const docRef = db.collection("mesai-kayitlari").doc("data");
+    const docSnap = await docRef.get();
     
-    const allSavedData = docSnap.exists() ? docSnap.data() : {};
+    const allSavedData = docSnap.exists ? docSnap.data() : {};
 
     const savedHourlyRate = localStorage.getItem('hourly-rate') || 0;
     hourlyRateInput.value = savedHourlyRate;
@@ -123,7 +118,7 @@ saveButton.addEventListener('click', async () => {
     });
 
     // Verileri Firebase'e kaydediyoruz
-    const savePromise = setDoc(doc(db, "mesai-kayitlari", "data"), allData);
+    const savePromise = db.collection("mesai-kayitlari").doc("data").set(allData);
     
     localStorage.setItem('hourly-rate', hourlyRateInput.value);
 
