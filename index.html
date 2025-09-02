@@ -97,6 +97,22 @@
             font-size: 18px;
             font-weight: bold;
         }
+        
+        /* Yeni: Gün Kutuları için Renkler */
+        .calendar-day.sabah { background-color: #c8e6c9; }
+        .calendar-day.gece { background-color: #bbdefb; }
+        .calendar-day.ara { background-color: #ffccbc; }
+        .calendar-day.haftalik-izin { background-color: #e1bee7; }
+        .calendar-day.yillik-izin { background-color: #fff9c4; }
+        .calendar-day.resmi-tatil { background-color: #ffcdd2; }
+        
+        /* Yeni: Mesai Saati Metni için Stil */
+        .mesai-display {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #555;
+        }
 
         /* Modal (Popup) */
         .modal {
@@ -144,6 +160,7 @@
             width: 100%;
         }
 
+        /* Modal içindeki select kutusu için renkler */
         .modal-body select.sabah { background-color: #c8e6c9; }
         .modal-body select.gece { background-color: #bbdefb; }
         .modal-body select.ara { background-color: #ffccbc; }
@@ -261,31 +278,7 @@
             { value: "yillik-izin", text: "Yıllık İzin" },
             { value: "resmi-tatil", text: "Resmi Tatil" }
         ];
-        
-        async function getSavedData() {
-            try {
-                const docRef = db.collection("mesai-kayitlari").doc("data");
-                const docSnap = await docRef.get();
-                return docSnap.exists ? docSnap.data() : {};
-            } catch (e) {
-                console.error("Veritabanı bağlantı hatası: ", e);
-                return {};
-            }
-        }
 
-        async function saveToFirebase(allData, hourlyRate) {
-            try {
-                await db.collection("mesai-kayitlari").doc("data").set({
-                    ...allData,
-                    hourlyRate: hourlyRate
-                });
-                alert('Tüm veriler Firebase\'e kaydedildi!');
-            } catch (e) {
-                console.error("Veri kaydetme hatası: ", e);
-                alert("Veri kaydedilirken bir hata oluştu.");
-            }
-        }
-        
         function calculateSummary(allData) {
             let totalMesai = 0;
             const year = currentDate.getFullYear();
@@ -308,7 +301,15 @@
         }
 
         async function updateCalendar() {
-            const allSavedData = await getSavedData();
+            let allSavedData = {};
+            try {
+                const docRef = db.collection("mesai-kayitlari").doc("data");
+                const docSnap = await docRef.get();
+                allSavedData = docSnap.exists ? docSnap.data() : {};
+            } catch (e) {
+                console.error("Veritabanı bağlantı hatası: ", e);
+                allSavedData = {};
+            }
             
             calendarContainer.innerHTML = `
                 <div class="calendar-day-header">Pzt</div>
@@ -348,6 +349,12 @@
                     const vardiyaClass = entryData.vardiya;
                     if (vardiyaClass) {
                         dayDiv.classList.add(vardiyaClass);
+                    }
+                    if (entryData.mesai) {
+                        const mesaiSpan = document.createElement('span');
+                        mesaiSpan.classList.add('mesai-display');
+                        mesaiSpan.textContent = `${entryData.mesai.replace('.', ',')}`; // virgül için
+                        dayDiv.appendChild(mesaiSpan);
                     }
                 }
                 
@@ -399,7 +406,8 @@
                 delete allSavedData[selectedDayDate];
             }
             
-            await saveToFirebase(allSavedData, hourlyRateInput.value);
+            allSavedData.hourlyRate = hourlyRateInput.value;
+            await saveToFirebase(allSavedData);
             
             modal.style.display = 'none';
             updateCalendar();
@@ -430,6 +438,16 @@
         });
 
         updateCalendar();
+        
+        async function saveToFirebase(data) {
+            try {
+                await db.collection("mesai-kayitlari").doc("data").set(data);
+                alert('Veri kaydedildi!');
+            } catch (e) {
+                console.error("Veri kaydetme hatası: ", e);
+                alert("Veri kaydedilirken bir hata oluştu.");
+            }
+        }
     </script>
 </body>
 </html>
