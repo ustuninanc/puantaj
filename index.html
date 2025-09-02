@@ -106,12 +106,17 @@
         .calendar-day.yillik-izin { background-color: #fff9c4; }
         .calendar-day.resmi-tatil { background-color: #ffcdd2; }
         
-        /* Yeni: Mesai Saati Metni için Stil */
+        /* Yeni: Vardiya ve Mesai Metni için Stil */
+        .vardiya-display {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #555;
+            font-weight: bold;
+        }
         .mesai-display {
             font-size: 14px;
             font-weight: bold;
-            margin-top: 5px;
-            color: #555;
+            color: #333;
         }
 
         /* Modal (Popup) */
@@ -350,10 +355,16 @@
                     if (vardiyaClass) {
                         dayDiv.classList.add(vardiyaClass);
                     }
+                    if (entryData.vardiya) {
+                        const vardiyaSpan = document.createElement('span');
+                        vardiyaSpan.classList.add('vardiya-display');
+                        vardiyaSpan.textContent = entryData.vardiya;
+                        dayDiv.appendChild(vardiyaSpan);
+                    }
                     if (entryData.mesai) {
                         const mesaiSpan = document.createElement('span');
                         mesaiSpan.classList.add('mesai-display');
-                        mesaiSpan.textContent = `Mesai: ${entryData.mesai.replace('.', ',')}`;
+                        mesaiSpan.textContent = `${entryData.mesai.replace('.', ',')}`;
                         dayDiv.appendChild(mesaiSpan);
                     }
                 }
@@ -446,6 +457,17 @@
             } catch (e) {
                 console.error("Veri kaydetme hatası: ", e);
                 alert("Veri kaydedilirken bir hata oluştu.");
+            }
+        }
+        
+        async function getSavedData() {
+            try {
+                const docRef = db.collection("mesai-kayitlari").doc("data");
+                const docSnap = await docRef.get();
+                return docSnap.exists ? docSnap.data() : {};
+            } catch (e) {
+                console.error("Veritabanı bağlantı hatası: ", e);
+                return {};
             }
         }
     </script>
