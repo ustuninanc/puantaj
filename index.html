@@ -353,7 +353,7 @@
                     if (entryData.mesai) {
                         const mesaiSpan = document.createElement('span');
                         mesaiSpan.classList.add('mesai-display');
-                        mesaiSpan.textContent = `${entryData.mesai.replace('.', ',')}`; // virgül için
+                        mesaiSpan.textContent = `Mesai: ${entryData.mesai.replace('.', ',')}`;
                         dayDiv.appendChild(mesaiSpan);
                     }
                 }
