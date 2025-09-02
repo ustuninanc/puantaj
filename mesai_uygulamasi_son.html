@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesai Takip Uygulaması</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F9F9F9;
+            color: #333333;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        header button {
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #51D4B8;
+        }
+
+        header span {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .summary {
+            background-color: #e0f7fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .summary > div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+        }
+
+        #hourly-rate {
+            max-width: 80px;
+            text-align: right;
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        .day-entry {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .date-info {
+            flex-shrink: 0;
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        .date-info span:first-child {
+            display: inline;
+            font-size: 20px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .date-info span:last-child {
+            display: inline;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .day-entry {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .date-info {
+                margin-bottom: 0;
+                width: 100px;
+            }
+
+            .input-group {
+                flex-direction: row;
+                flex-grow: 1;
+            }
+        }
+
+        select, input {
+            font-family: Arial, sans-serif;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            flex-grow: 1;
+            font-size: 14px;
+        }
+
+        select {
+            width: 100%;
+            background-color: #f0f0f0; 
+            color: #333;
+        }
+
+        .vardiya-select.sabah { background-color: #c8e6c9; color: #333; }
+        .vardiya-select.gece { background-color: #bbdefb; color: #333; }
+        .vardiya-select.ara { background-color: #ffccbc; color: #333; }
+        .vardiya-select.haftalik-izin { background-color: #e1bee7; color: #333; }
+        .vardiya-select.yillik-izin { background-color: #fff9c4; color: #333; }
+        .vardiya-select.resmi-tatil { background-color: #ffcdd2; color: #333; }
+
+        input[type="number"], input[type="text"] { width: auto; }
+
+        footer { text-align: center; margin-top: 20px; }
+
+        .save-button {
+            background-color: #51D4B8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .save-button:hover { background-color: #43B99A; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button>&lt;</button>
+        <span>Şubat 2025</span>
+        <button>&gt;</button>
+    </header>
+
+    <main></main>
+    
+    <div class="summary">
+        <div>
+            <span>Mesai Saati Ücreti:</span>
+            <input type="number" id="hourly-rate" value="0">
+        </div>
+        <div>
+            <span>Toplam Mesai Saati:</span>
+            <span id="total-mesai-hours">0</span>
+        </div>
+        <div>
+            <span>Toplam Mesai Kazancı:</span>
+            <span id="total-earnings">0</span>
+        </div>
+    </div>
+    
+    <footer>
+        <button class="save-button">Kaydet</button>
+    </footer>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcbM72Qp25gW6AHidAbTyVBTWNidGZfeQ",
+            authDomain: "mesai-takip-febc7.firebaseapp.com",
+            projectId: "mesai-takip-febc7",
+            storageBucket: "mesai-takip-febc7.firebasestorage.app",
+            messagingSenderId: "25890495039",
+            appId: "1:25890495039:web:2ec6508d58ea4be121b68a"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = app.firestore();
+
+        const saveButton = document.querySelector('.save-button');
+        const mainContent = document.querySelector('main');
+        const monthYearSpan = document.querySelector('header span');
+        const prevButton = document.querySelector('header button:first-of-type');
+        const nextButton = document.querySelector('header button:last-of-type');
+        const totalMesaiHoursSpan = document.getElementById('total-mesai-hours');
+        const totalEarningsSpan = document.getElementById('total-earnings');
+        const hourlyRateInput = document.getElementById('hourly-rate');
+
+        let currentDate = new Date();
+
+        const dayNames = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+
+        const vardiyaOptions = [
+            { value: "", text: "" },
+            { value: "sabah", text: "Sabah" },
+            { value: "gece", text: "Gece" },
+            { value: "ara", text: "Ara" },
+            { value: "haftalik-izin", text: "Haftalık İzin" },
+            { value: "yillik-izin", text: "Yıllık İzin" },
+            { value: "resmi-tatil", text: "Resmi Tatil" }
+        ];
+
+        function calculateSummary() {
+            let totalMesai = 0;
+            const dayEntries = document.querySelectorAll('.day-entry');
+            dayEntries.forEach(entry => {
+                const mesaiInput = entry.querySelector('.mesai-input');
+                if (mesaiInput && mesaiInput.value) {
+                    const mesaiValue = mesaiInput.value.replace(',', '.');
+                    totalMesai += parseFloat(mesaiValue);
+                }
+            });
+
+            const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
+            const totalEarnings = totalMesai * hourlyRate;
+
+            totalMesaiHoursSpan.textContent = totalMesai.toFixed(2);
+            totalEarningsSpan.textContent = totalEarnings.toFixed(2);
+        }
+
+        async function updateCalendar() {
+            mainContent.innerHTML = '';
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+
+            const options = { year: 'numeric', month: 'long' };
+            monthYearSpan.textContent = currentDate.toLocaleDateString('tr-TR', options);
+            
+            let allSavedData = {};
+            try {
+                const docRef = db.collection("mesai-kayitlari").doc("data");
+                const docSnap = await docRef.get();
+                allSavedData = docSnap.exists ? docSnap.data() : {};
+            } catch (e) {
+                console.error("Veritabanı bağlantı hatası: ", e);
+                allSavedData = {};
+            }
+
+            const savedHourlyRate = localStorage.getItem('hourly-rate') || 0;
+            hourlyRateInput.value = savedHourlyRate;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const currentDay = new Date(year, month, i);
+                const dayName = dayNames[currentDay.getDay()];
+                const dateString = `${year}-${month + 1}-${i}`;
+
+                const entryData = allSavedData[dateString] || {};
+                
+                let vardiyaOptionsHTML = '';
+                vardiyaOptions.forEach(option => {
+                    vardiyaOptionsHTML += `<option value="${option.value}" ${entryData.vardiya === option.value ? 'selected' : ''}>${option.text}</option>`;
+                });
+
+                const dayEntryHTML = `
+                    <div class="day-entry" data-date="${dateString}">
+                        <div class="date-info">
+                            <span>${i}</span>
+                            <span>${dayName}</span>
+                        </div>
+                        <div class="input-group">
+                            <select class="vardiya-select ${entryData.vardiya || ''}">
+                                ${vardiyaOptionsHTML}
+                            </select>
+                            <input type="number" class="mesai-input" placeholder="Mesai Saati" value="${entryData.mesai || ''}">
+                            <input type="text" class="aciklama-input" placeholder="Açıklama" value="${entryData.aciklama || ''}">
+                        </div>
+                    </div>
+                `;
+                mainContent.insertAdjacentHTML('beforeend', dayEntryHTML);
+            }
+            
+            calculateSummary();
+        }
+
+        saveButton.addEventListener('click', async () => {
+            const dayEntries = document.querySelectorAll('.day-entry');
+            const allData = {};
+
+            dayEntries.forEach(entry => {
+                const date = entry.getAttribute('data-date');
+                const vardiyaSelect = entry.querySelector('.vardiya-select');
+                const vardiya = vardiyaSelect.value;
+                const mesai = entry.querySelector('.mesai-input').value;
+                const aciklama = entry.querySelector('.aciklama-input').value;
+
+                if (vardiya || mesai || aciklama) {
+                    allData[date] = { date, vardiya, mesai: mesai.replace(',', '.'), aciklama };
+                }
+            });
+
+            try {
+                const savePromise = db.collection("mesai-kayitlari").doc("data").set(allData);
+                await savePromise;
+                alert('Tüm veriler Firebase\'e kaydedildi!');
+            } catch (e) {
+                console.error("Veri kaydetme hatası: ", e);
+                alert("Veri kaydedilirken bir hata oluştu.");
+            }
+            
+            localStorage.setItem('hourly-rate', hourlyRateInput.value);
+            updateCalendar();
+        });
+
+        prevButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            updateCalendar();
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            updateCalendar();
+        });
+
+        hourlyRateInput.addEventListener('input', () => {
+            calculateSummary();
+        });
+
+        mainContent.addEventListener('change', (event) => {
+            if (event.target.classList.contains('vardiya-select')) {
+                const selectedVardiya = event.target.value;
+                event.target.className = 'vardiya-select ' + selectedVardiya;
+            }
+        });
+
+        updateCalendar();
+    </script>
+</body>
+</html>
