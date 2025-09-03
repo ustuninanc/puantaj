@@ -15,8 +15,64 @@
             box-sizing: border-box;
             font-size: 14px;
         }
+
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .auth-form input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
         
-        /* Yeni: Header'ı daha belirgin yapıyoruz */
+        .auth-form button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #51D4B8;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .auth-form button:hover {
+            background-color: #43B99A;
+        }
+
+        .auth-form p {
+            text-align: center;
+            margin: 0;
+        }
+
+        .auth-form a {
+            color: #51D4B8;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .app-container {
+            display: none; /* Varsayılan olarak gizli olacak */
+        }
+        
         header {
             display: flex;
             justify-content: center;
@@ -27,19 +83,18 @@
             margin-bottom: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
+        .month-year-nav {
+            display: flex;
+            align-items: center;
+        }
 
-        header button {
+        .month-year-nav button {
             background-color: transparent;
             border: none;
             font-size: 24px;
             cursor: pointer;
             color: #51D4B8;
-        }
-        
-        /* Yeni: Butonları ay adının yanına alıyoruz */
-        .month-year-nav {
-            display: flex;
-            align-items: center;
         }
 
         .month-year-nav span {
@@ -75,7 +130,6 @@
             font-size: 14px;
         }
         
-        /* Takvim Görünümü */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -131,7 +185,6 @@
             color: #333;
         }
 
-        /* Modal (Popup) */
         .modal {
             display: none;
             position: fixed;
@@ -174,7 +227,6 @@
         }
 
         .modal-body select, .modal-body input {
-            /* Yeni: Giriş alanlarını daha kolay tıklanabilir yapıyoruz */
             width: 100%;
             padding: 10px;
             font-size: 16px; 
@@ -210,61 +262,83 @@
     </style>
 </head>
 <body>
-
-    <header>
-        <div class="month-year-nav">
-            <button id="prev-btn">&lt;</button>
-            <span id="month-year-span"></span>
-            <button id="next-btn">&gt;</button>
-        </div>
-    </header>
-
-    <div class="calendar-grid" id="calendar-container">
-        <div class="calendar-day-header">Pzt</div>
-        <div class="calendar-day-header">Sal</div>
-        <div class="calendar-day-header">Çar</div>
-        <div class="calendar-day-header">Per</div>
-        <div class="calendar-day-header">Cum</div>
-        <div class="calendar-day-header">Cmt</div>
-        <div class="calendar-day-header">Paz</div>
-    </div>
     
-    <div id="data-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-date-display"></h2>
-                <span class="close-button">&times;</span>
-            </div>
-            <div class="modal-body">
-                <select id="modal-vardiya-select"></select>
-                <input type="number" id="modal-mesai-input" placeholder="Mesai Saati">
-                <input type="text" id="modal-aciklama-input" placeholder="Açıklama">
-                <button id="modal-save-button" class="save-button">Kaydet</button>
-            </div>
+    <div id="auth-container" class="auth-container">
+        <div id="login-form" class="auth-form">
+            <h2>Giriş Yap</h2>
+            <input type="email" id="login-email" placeholder="E-posta" required>
+            <input type="password" id="login-password" placeholder="Şifre" required>
+            <button id="login-button">Giriş Yap</button>
+            <p>Hesabın yok mu? <a href="#" id="show-register">Kayıt Ol</a></p>
+        </div>
+        
+        <div id="register-form" class="auth-form" style="display:none;">
+            <h2>Kayıt Ol</h2>
+            <input type="email" id="register-email" placeholder="E-posta" required>
+            <input type="password" id="register-password" placeholder="Şifre" required>
+            <button id="register-button">Kayıt Ol</button>
+            <p>Zaten hesabın var mı? <a href="#" id="show-login">Giriş Yap</a></p>
         </div>
     </div>
     
-    <div class="summary">
-        <div>
-            <span>Mesai Saati Ücreti:</span>
-            <input type="number" id="hourly-rate" value="0">
+    <div id="app-container" class="app-container">
+        <header>
+            <div class="month-year-nav">
+                <button id="prev-btn">&lt;</button>
+                <span id="month-year-span"></span>
+                <button id="next-btn">&gt;</button>
+            </div>
+            <button id="logout-button">Çıkış Yap</button>
+        </header>
+
+        <div class="calendar-grid" id="calendar-container">
+            <div class="calendar-day-header">Pzt</div>
+            <div class="calendar-day-header">Sal</div>
+            <div class="calendar-day-header">Çar</div>
+            <div class="calendar-day-header">Per</div>
+            <div class="calendar-day-header">Cum</div>
+            <div class="calendar-day-header">Cmt</div>
+            <div class="calendar-day-header">Paz</div>
         </div>
-        <div>
-            <span>Gece Ticket:</span>
-            <span id="night-ticket-span">0</span>
+        
+        <div id="data-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-date-display"></h2>
+                    <span class="close-button">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <select id="modal-vardiya-select"></select>
+                    <input type="number" id="modal-mesai-input" placeholder="Mesai Saati">
+                    <input type="text" id="modal-aciklama-input" placeholder="Açıklama">
+                    <button id="modal-save-button" class="save-button">Kaydet</button>
+                </div>
+            </div>
         </div>
-        <div>
-            <span>Toplam Mesai Saati:</span>
-            <span id="total-mesai-hours">0</span>
-        </div>
-        <div>
-            <span>Toplam Mesai Kazancı:</span>
-            <span id="total-earnings">0</span>
+        
+        <div class="summary">
+            <div>
+                <span>Mesai Saati Ücreti:</span>
+                <input type="number" id="hourly-rate" value="0">
+            </div>
+            <div>
+                <span>Gece Ticket:</span>
+                <span id="night-ticket-span">0</span>
+            </div>
+            <div>
+                <span>Toplam Mesai Saati:</span>
+                <span id="total-mesai-hours">0</span>
+            </div>
+            <div>
+                <span>Toplam Mesai Kazancı:</span>
+                <span id="total-earnings">0</span>
+            </div>
         </div>
     </div>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     
     <script>
         const firebaseConfig = {
@@ -278,6 +352,22 @@
 
         const app = firebase.initializeApp(firebaseConfig);
         const db = app.firestore();
+        const auth = app.auth();
+        
+        // Kimlik doğrulama elemanları
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const loginButton = document.getElementById('login-button');
+        const registerEmail = document.getElementById('register-email');
+        const registerPassword = document.getElementById('register-password');
+        const registerButton = document.getElementById('register-button');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+        const logoutButton = document.getElementById('logout-button');
         
         const prevButton = document.getElementById('prev-btn');
         const nextButton = document.getElementById('next-btn');
@@ -298,6 +388,7 @@
 
         let currentDate = new Date();
         let selectedDayDate = null;
+        let currentUserUid = null;
 
         const vardiyaOptions = [
             { value: "", text: "" },
@@ -337,17 +428,32 @@
             totalMesaiHoursSpan.textContent = totalMesai.toFixed(2);
             totalEarningsSpan.textContent = totalEarnings.toFixed(2);
         }
-
-        async function updateCalendar() {
-            let allSavedData = {};
+        
+        async function getSavedData() {
             try {
-                const docRef = db.collection("mesai-kayitlari").doc("data");
+                const docRef = db.collection("mesai-kayitlari").doc(currentUserUid);
                 const docSnap = await docRef.get();
-                allSavedData = docSnap.exists ? docSnap.data() : {};
+                return docSnap.exists ? docSnap.data() : {};
             } catch (e) {
                 console.error("Veritabanı bağlantı hatası: ", e);
-                allSavedData = {};
+                return {};
             }
+        }
+
+        async function saveToFirebase(data) {
+            try {
+                await db.collection("mesai-kayitlari").doc(currentUserUid).set(data);
+                alert('Veri kaydedildi!');
+            } catch (e) {
+                console.error("Veri kaydetme hatası: ", e);
+                alert("Veri kaydedilirken bir hata oluştu.");
+            }
+        }
+
+        async function updateCalendar() {
+            if (!currentUserUid) return;
+
+            const allSavedData = await getSavedData();
             
             calendarContainer.innerHTML = `
                 <div class="calendar-day-header">Pzt</div>
@@ -481,28 +587,62 @@
             getSavedData().then(calculateSummary);
         });
 
-        updateCalendar();
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'flex';
+        });
         
-        async function saveToFirebase(data) {
-            try {
-                await db.collection("mesai-kayitlari").doc("data").set(data);
-                alert('Veri kaydedildi!');
-            } catch (e) {
-                console.error("Veri kaydetme hatası: ", e);
-                alert("Veri kaydedilirken bir hata oluştu.");
-            }
-        }
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'flex';
+        });
         
-        async function getSavedData() {
-            try {
-                const docRef = db.collection("mesai-kayitlari").doc("data");
-                const docSnap = await docRef.get();
-                return docSnap.exists ? docSnap.data() : {};
-            } catch (e) {
-                console.error("Veritabanı bağlantı hatası: ", e);
-                return {};
+        // Kullanıcı Kayıt
+        registerButton.addEventListener('click', () => {
+            const email = registerEmail.value;
+            const password = registerPassword.value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert('Kayıt Başarılı!');
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        });
+
+        // Kullanıcı Girişi
+        loginButton.addEventListener('click', () => {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert('Giriş Başarılı!');
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        });
+        
+        // Kullanıcı Çıkışı
+        logoutButton.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // Giriş Durumu Dinleme
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                authContainer.style.display = 'none';
+                appContainer.style.display = 'block';
+                currentUserUid = user.uid;
+                updateCalendar();
+            } else {
+                authContainer.style.display = 'flex';
+                appContainer.style.display = 'none';
+                currentUserUid = null;
             }
-        }
+        });
     </script>
 </body>
 </html>
