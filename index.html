@@ -458,20 +458,20 @@
                 
                 dayDiv.addEventListener('click', () => {
                     selectedDayDate = dayDiv.dataset.date;
-                    const entryData = monthlyData[selectedDayDate] || {};
+                    const entryData = monthlyData[selectedDayDate];
                     const dayNumber = new Date(selectedDayDate).getDate();
 
                     modalDateDisplay.textContent = `${dayNumber} ${monthYearSpan.textContent}`;
                     
                     let optionsHTML = '';
                     vardiyaOptions.forEach(option => {
-                        optionsHTML += `<option value="${option.value}" ${entryData.vardiya === option.value ? 'selected' : ''}>${option.text}</option>`;
+                        optionsHTML += `<option value="${option.value}" ${entryData && entryData.vardiya === option.value ? 'selected' : ''}>${option.text}</option>`;
                     });
                     modalVardiyaSelect.innerHTML = optionsHTML;
 
-                    modalVardiyaSelect.className = 'vardiya-select ' + (entryData.vardiya || '');
-                    modalMesaiInput.value = entryData.mesai || '';
-                    modalAciklamaInput.value = entryData.aciklama || '';
+                    modalVardiyaSelect.className = 'vardiya-select ' + (entryData && entryData.vardiya || '');
+                    modalMesaiInput.value = entryData && entryData.mesai || '';
+                    modalAciklamaInput.value = entryData && entryData.aciklama || '';
 
                     modal.style.display = 'block';
                 });
