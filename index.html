@@ -242,8 +242,6 @@
         .save-button:hover { background-color: #43B99A; }
         .logout-button { background-color: #e57373; }
         .logout-button:hover { background-color: #d32f2f; }
-
-        /* Yeni: Modal Kapat Butonu */
         .modal-close-btn {
             padding: 10px 20px;
             border: none;
@@ -364,6 +362,7 @@
         let currentDate = new Date();
         let selectedDayDate = null;
         let currentUserUid = null;
+        let monthlyData = {};
 
         const vardiyaOptions = [
             { value: "", text: "" },
@@ -401,7 +400,7 @@
         async function updateCalendar() {
             if (!currentUserUid) return;
 
-            const allSavedData = await getSavedData();
+            monthlyData = await getSavedData();
             
             calendarContainer.innerHTML = `
                 <div class="calendar-day-header">Pzt</div>
@@ -434,7 +433,7 @@
                 dayDiv.dataset.date = `${year}-${month + 1}-${i}`;
                 
                 const dateString = dayDiv.dataset.date;
-                const entryData = allSavedData[dateString];
+                const entryData = monthlyData[dateString];
 
                 dayDiv.innerHTML = `<span class="day-number">${i}</span>`;
                 
@@ -459,7 +458,7 @@
                 
                 dayDiv.addEventListener('click', () => {
                     selectedDayDate = dayDiv.dataset.date;
-                    const entryData = allSavedData[selectedDayDate] || {};
+                    const entryData = monthlyData[selectedDayDate] || {};
                     const dayNumber = new Date(selectedDayDate).getDate();
 
                     modalDateDisplay.textContent = `${dayNumber} ${monthYearSpan.textContent}`;
@@ -482,7 +481,27 @@
         }
         
         modalCloseButton.addEventListener('click', () => {
+            if (!selectedDayDate) return;
+            
+            const vardiya = modalVardiyaSelect.value;
+            const mesai = modalMesaiInput.value;
+            const aciklama = modalAciklamaInput.value;
+            
+            const mesaiValue = mesai.toString().replace(',', '.');
+
+            if (vardiya || mesaiValue || aciklama) {
+                monthlyData[selectedDayDate] = {
+                    date: selectedDayDate,
+                    vardiya: vardiya,
+                    mesai: mesaiValue,
+                    aciklama: aciklama
+                };
+            } else {
+                delete monthlyData[selectedDayDate];
+            }
+            
             modal.style.display = 'none';
+            updateCalendar();
         });
 
         window.onclick = function(event) {
@@ -502,19 +521,7 @@
         });
 
         saveAllButton.addEventListener('click', async () => {
-            const allData = await getSavedData();
-            
-            // Veri girişi yapılan tüm günleri al
-            const dayDivs = calendarContainer.querySelectorAll('.calendar-day');
-            dayDivs.forEach(dayDiv => {
-                const dateString = dayDiv.dataset.date;
-                // Bu kısım, modal açıkken veri girişi yapıldıktan sonra güncelleme yapacak
-                // Bu tasarımla tek tek inputları okumak zor. Veriyi modal'dan alıp kaydetmeliyiz.
-            });
-            // Yeni tasarımda veriyi modal'dan almamız gerekiyor.
-            // Bu nedenle, modaldaki verileri kaydetme mantığını yeniden yazmalıyız.
-            
-            alert("Yeni tasarımda kaydetme mantığı farklı çalışıyor. Lütfen bir sonraki adım için bekleyiniz.");
+            await saveToFirebase(monthlyData);
         });
         
         showRegisterLink.addEventListener('click', (e) => {
