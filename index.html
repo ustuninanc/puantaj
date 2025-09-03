@@ -397,10 +397,12 @@
             }
         }
 
-        async function updateCalendar() {
+        async function updateCalendar(initialLoad = true) {
             if (!currentUserUid) return;
-
-            monthlyData = await getSavedData();
+            
+            if (initialLoad) {
+                monthlyData = await getSavedData();
+            }
             
             calendarContainer.innerHTML = `
                 <div class="calendar-day-header">Pzt</div>
@@ -458,7 +460,7 @@
                 
                 dayDiv.addEventListener('click', () => {
                     selectedDayDate = dayDiv.dataset.date;
-                    const entryData = monthlyData[selectedDayDate];
+                    const entryData = monthlyData[selectedDayDate] || {};
                     const dayNumber = new Date(selectedDayDate).getDate();
 
                     modalDateDisplay.textContent = `${dayNumber} ${monthYearSpan.textContent}`;
@@ -501,12 +503,13 @@
             }
             
             modal.style.display = 'none';
-            updateCalendar();
+            updateCalendar(false);
         });
 
         window.onclick = function(event) {
             if (event.target == modal) {
                 modal.style.display = "none";
+                updateCalendar(false);
             }
         }
         
