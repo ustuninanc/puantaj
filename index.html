@@ -15,12 +15,17 @@
             box-sizing: border-box;
             font-size: 14px;
         }
-
+        
+        /* Yeni: Header'ı daha belirgin yapıyoruz */
         header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            background-color: #f2f2f2;
+            border-radius: 8px;
+            padding: 10px;
             margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         header button {
@@ -30,12 +35,17 @@
             cursor: pointer;
             color: #51D4B8;
         }
+        
+        /* Yeni: Butonları ay adının yanına alıyoruz */
+        .month-year-nav {
+            display: flex;
+            align-items: center;
+        }
 
-        header span {
+        .month-year-nav span {
             font-size: 20px;
             font-weight: bold;
-            text-align: center;
-            flex-grow: 1;
+            margin: 0 10px;
         }
 
         .summary {
@@ -52,6 +62,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 3px 0;
+        }
+        
+        .summary > div span:first-child {
+             font-weight: bold;
         }
 
         #hourly-rate {
@@ -98,7 +112,6 @@
             font-weight: bold;
         }
         
-        /* Yeni: Gün Kutuları için Renkler */
         .calendar-day.sabah { background-color: #c8e6c9; }
         .calendar-day.gece { background-color: #bbdefb; }
         .calendar-day.ara { background-color: #ffccbc; }
@@ -106,7 +119,6 @@
         .calendar-day.yillik-izin { background-color: #fff9c4; }
         .calendar-day.resmi-tatil { background-color: #ffcdd2; }
         
-        /* Yeni: Vardiya ve Mesai Metni için Stil */
         .vardiya-display {
             font-size: 12px;
             margin-top: 5px;
@@ -162,10 +174,16 @@
         }
 
         .modal-body select, .modal-body input {
+            /* Yeni: Giriş alanlarını daha kolay tıklanabilir yapıyoruz */
             width: 100%;
+            padding: 10px;
+            font-size: 16px; 
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            box-sizing: border-box;
         }
-
-        /* Modal içindeki select kutusu için renkler */
+        
         .modal-body select.sabah { background-color: #c8e6c9; }
         .modal-body select.gece { background-color: #bbdefb; }
         .modal-body select.ara { background-color: #ffccbc; }
@@ -194,9 +212,11 @@
 <body>
 
     <header>
-        <button id="prev-btn">&lt;</button>
-        <span id="month-year-span"></span>
-        <button id="next-btn">&gt;</button>
+        <div class="month-year-nav">
+            <button id="prev-btn">&lt;</button>
+            <span id="month-year-span"></span>
+            <button id="next-btn">&gt;</button>
+        </div>
     </header>
 
     <div class="calendar-grid" id="calendar-container">
@@ -228,6 +248,10 @@
         <div>
             <span>Mesai Saati Ücreti:</span>
             <input type="number" id="hourly-rate" value="0">
+        </div>
+        <div>
+            <span>Gece Ticket:</span>
+            <span id="night-ticket-span">0</span>
         </div>
         <div>
             <span>Toplam Mesai Saati:</span>
@@ -262,6 +286,7 @@
         const totalMesaiHoursSpan = document.getElementById('total-mesai-hours');
         const totalEarningsSpan = document.getElementById('total-earnings');
         const hourlyRateInput = document.getElementById('hourly-rate');
+        const nightTicketSpan = document.getElementById('night-ticket-span');
         
         const modal = document.getElementById('data-modal');
         const modalDateDisplay = document.getElementById('modal-date-display');
@@ -286,6 +311,7 @@
 
         function calculateSummary(allData) {
             let totalMesai = 0;
+            let nightShiftCount = 0;
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
 
@@ -293,14 +319,21 @@
                 const dateString = `${year}-${month}-${i}`;
                 const entryData = allData[dateString];
                 
-                if (entryData && entryData.mesai) {
-                    const mesaiValue = entryData.mesai.toString().replace(',', '.');
-                    totalMesai += parseFloat(mesaiValue);
+                if (entryData) {
+                    if (entryData.mesai) {
+                        const mesaiValue = entryData.mesai.toString().replace(',', '.');
+                        totalMesai += parseFloat(mesaiValue);
+                    }
+                    if (entryData.vardiya === "gece") {
+                        nightShiftCount++;
+                    }
                 }
             }
             const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
             const totalEarnings = totalMesai * hourlyRate;
+            const nightTicketTotal = nightShiftCount * 150;
 
+            nightTicketSpan.textContent = nightTicketTotal.toFixed(2);
             totalMesaiHoursSpan.textContent = totalMesai.toFixed(2);
             totalEarningsSpan.textContent = totalEarnings.toFixed(2);
         }
