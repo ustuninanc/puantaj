@@ -214,7 +214,7 @@
         .modal-body select.sabah { background-color: #c8e6c9; }
         .modal-body select.gece { background-color: #bbdefb; }
         .modal-body select.ara { background-color: #ffccbc; }
-        .modal-body select.haftalik-izin { background-color: #e1bee7; }
+        .modal-body select.hafta-izni { background-color: #e1bee7; }
         .modal-body select.yillik-izin { background-color: #fff9c4; }
         .modal-body select.resmi-tatil { background-color: #ffcdd2; }
 
@@ -309,8 +309,11 @@
             </div>
         </div>
         
+        <div class="summary" id="summary-container">
+            </div>
+
         <footer>
-            <button id="save-all-button" class="save-button">Tüm Ayı Kaydet</button>
+            <button id="save-all-button" class="save-button">Kaydet</button>
             <button id="logout-button" class="logout-button">Çıkış Yap</button>
         </footer>
     </div>
@@ -346,6 +349,7 @@
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
         const logoutButton = document.getElementById('logout-button');
+        const saveAllButton = document.getElementById('save-all-button');
         
         const prevButton = document.getElementById('prev-btn');
         const nextButton = document.getElementById('next-btn');
@@ -357,7 +361,8 @@
         const modalMesaiInput = document.getElementById('modal-mesai-input');
         const modalAciklamaInput = document.getElementById('modal-aciklama-input');
         const modalCloseButton = document.getElementById('modal-close-btn');
-        const saveAllButton = document.getElementById('save-all-button');
+
+        const summaryContainer = document.getElementById('summary-container');
 
         let currentDate = new Date();
         let selectedDayDate = null;
@@ -365,11 +370,11 @@
         let monthlyData = {};
 
         const vardiyaOptions = [
-            { value: "", text: "" },
+            { value: "", text: "Vardiya Seçiniz" },
             { value: "sabah", text: "Sabah" },
             { value: "gece", text: "Gece" },
             { value: "ara", text: "Ara" },
-            { value: "haftalik-izin", text: "Haftalık İzin" },
+            { value: "hafta-izni", text: "Hafta İzni" },
             { value: "yillik-izin", text: "Yıllık İzin" },
             { value: "resmi-tatil", text: "Resmi Tatil" }
         ];
@@ -390,17 +395,78 @@
             if (!currentUserUid) return;
             try {
                 await db.collection("mesai-kayitlari").doc(currentUserUid).set(data);
-                alert('Tüm veriler Firebase\'e kaydedildi!');
+                alert('Veri kaydedildi!');
             } catch (e) {
                 console.error("Veri kaydetme hatası: ", e);
                 alert("Veri kaydedilirken bir hata oluştu.");
             }
         }
 
-        async function updateCalendar(initialLoad = true) {
-            if (!currentUserUid) return;
+        function renderSummary(allData) {
+            let totalMesai = 0;
+            let nightTicketCount = 0;
+            let vardiyaCounts = {
+                "sabah": 0, "gece": 0, "ara": 0, "hafta-izni": 0, "yillik-izin": 0, "resmi-tatil": 0
+            };
             
-            if (initialLoad) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+
+            for (let i = 1; i <= new Date(year, month, 0).getDate(); i++) {
+                const dateString = `${year}-${month}-${i}`;
+                const entryData = allData[dateString];
+                
+                if (entryData) {
+                    if (entryData.mesai) {
+                        const mesaiValue = entryData.mesai.toString().replace(',', '.');
+                        totalMesai += parseFloat(mesaiValue);
+                    }
+                    if (entryData.vardiya) {
+                        vardiyaCounts[entryData.vardiya]++;
+                        if (entryData.vardiya === 'gece') {
+                            nightTicketCount++;
+                        }
+                    }
+                }
+            }
+            
+            const nightTicketTotal = nightTicketCount * 150;
+            
+            let vardiyaCountsHTML = "";
+            vardiyaOptions.forEach(option => {
+                if (option.value) {
+                    vardiyaCountsHTML += `
+                        <div>
+                            <span>${option.text}:</span>
+                            <span>${vardiyaCounts[option.value] || 0} gün</span>
+                        </div>
+                    `;
+                }
+            });
+
+            summaryContainer.innerHTML = `
+                <div>
+                    <span>Toplam Mesai Saati:</span>
+                    <span>${totalMesai.toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div>
+                    <span>Gece Ticket:</span>
+                    <span>${nightTicketTotal.toFixed(2).replace('.', ',')} TL</span>
+                </div>
+                <hr style="margin: 10px 0; border-color: #ccc;">
+                <div>
+                    <span>Çalıştığım Günler:</span>
+                </div>
+                ${vardiyaCountsHTML}
+            `;
+        }
+
+        async function updateCalendar(data = null) {
+            if (!currentUserUid) return;
+
+            if (data) {
+                monthlyData = data;
+            } else {
                 monthlyData = await getSavedData();
             }
             
@@ -447,7 +513,8 @@
                     if (entryData.vardiya) {
                         const vardiyaSpan = document.createElement('span');
                         vardiyaSpan.classList.add('vardiya-display');
-                        vardiyaSpan.textContent = entryData.vardiya;
+                        const selectedOption = vardiyaOptions.find(opt => opt.value === entryData.vardiya);
+                        vardiyaSpan.textContent = selectedOption ? selectedOption.text : entryData.vardiya;
                         dayDiv.appendChild(vardiyaSpan);
                     }
                     if (entryData.mesai) {
@@ -460,18 +527,20 @@
                 
                 dayDiv.addEventListener('click', () => {
                     selectedDayDate = dayDiv.dataset.date;
-                    const entryData = monthlyData[selectedDayDate] || {};
+                    const entryData = monthlyData[selectedDayDate];
                     const dayNumber = new Date(selectedDayDate).getDate();
 
                     modalDateDisplay.textContent = `${dayNumber} ${monthYearSpan.textContent}`;
                     
                     let optionsHTML = '';
                     vardiyaOptions.forEach(option => {
-                        optionsHTML += `<option value="${option.value}" ${entryData && entryData.vardiya === option.value ? 'selected' : ''}>${option.text}</option>`;
+                        const isSelected = entryData && entryData.vardiya === option.value;
+                        optionsHTML += `<option value="${option.value}" ${isSelected ? 'selected' : ''}>${option.text}</option>`;
                     });
                     modalVardiyaSelect.innerHTML = optionsHTML;
 
-                    modalVardiyaSelect.className = 'vardiya-select ' + (entryData && entryData.vardiya || '');
+                    const selectedVardiya = modalVardiyaSelect.value;
+                    modalVardiyaSelect.className = 'vardiya-select ' + (selectedVardiya || '');
                     modalMesaiInput.value = entryData && entryData.mesai || '';
                     modalAciklamaInput.value = entryData && entryData.aciklama || '';
 
@@ -480,6 +549,7 @@
 
                 calendarContainer.appendChild(dayDiv);
             }
+            renderSummary(monthlyData);
         }
         
         modalCloseButton.addEventListener('click', () => {
@@ -503,13 +573,17 @@
             }
             
             modal.style.display = 'none';
-            updateCalendar(false);
+            updateCalendar(monthlyData);
+        });
+        
+        modalVardiyaSelect.addEventListener('change', () => {
+             modalVardiyaSelect.className = 'vardiya-select ' + (modalVardiyaSelect.value || '');
         });
 
         window.onclick = function(event) {
             if (event.target == modal) {
                 modal.style.display = "none";
-                updateCalendar(false);
+                updateCalendar(monthlyData);
             }
         }
         
